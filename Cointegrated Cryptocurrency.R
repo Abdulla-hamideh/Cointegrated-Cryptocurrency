@@ -7,6 +7,7 @@ library(forecast)
 library(remotes)
 #install.packages("egcm")
 library(egcm)
+library(urca)
 #install.packages("blotter")
 library(blotter)
 library(foreach)
@@ -58,9 +59,32 @@ correlation <- cor(corrdata, method = "pearson")
 
 corrplot(correlation, method="number")
 
+# johanse test to find cointegration
+# lagselection
+lagselect <- vars::VARselect(data,lag.max = 10, type ="both")
+lagselect$selection 
+# the model chose 5 is the optimal lag,
+# lag selection is quite different in that we have to subtract one assuming there will be contigration relationship  
+#5-1 = 4 lags
+# k = 4 in johansen test 
+  
+# johansen test
+
+model <- ca.jo(data, type="eigen", ecdet="none",K=9,spec="transitory", season = 12)
+summary(model)
+
+model # test staticts 
+model@teststat[2] # test statistics H0 r=0, to be rejected 
+model@teststat[1] # test statistics H0 R=1, should not be rejected 
+# take critical value 
+model@cval
+
+#plot the test 
+## our model looks better to the paper using our own coefficients 
+spread <- data$BTC.USD -3.44*data$ETH.USD -29.57*data$LTC.USD + 0.73*data$BCH.USD
+plot.ts(spread)
 
 #GANGLE ENGLE 2 step approach
-
 #salmost the same as paper
 adf.test(diff(data$BTC.USD.Adjusted)[-1,])
 adf.test(diff(data$ETH.USD.Adjusted)[-1,])
